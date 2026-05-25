@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>给生生 ✦</title>
+<style>
+  @import url('https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
+    background: #0a0a12;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  /* === WELCOME === */
+  #welcome {
+    position: fixed; inset: 0;
+    z-index: 20;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(10,10,18,0.6);
+    backdrop-filter: blur(12px);
+    transition: opacity 1s, transform 1s;
+  }
+  #welcome.hidden {
+    opacity: 0; pointer-events: none; transform: scale(1.05);
+  }
+  #welcome h1 {
+    font-size: clamp(1.8rem,5vw,3.6rem);
+    font-weight: 700;
+    background: linear-gradient(135deg,#f093fb,#f5576c,#ffecd2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: .08em;
+    animation: pulseGlow 3s ease-in-out infinite;
+    margin-bottom: 2.5rem;
+  }
+  @keyframes pulseGlow {
+    0%,100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+  .welcome-btn {
+    font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
+    font-size: 1.1rem;
+    padding: 0.8rem 2.8rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    margin: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+  .welcome-btn:hover {
+    background: rgba(245,87,108,0.2);
+    border-color: rgba(245,87,108,0.4);
+    transform: scale(1.04);
+    box-shadow: 0 0 30px rgba(245,87,108,0.15);
+  }
+  .welcome-btn.love {
+    background: rgba(245,87,108,0.12);
+    border-color: rgba(245,87,108,0.25);
+  }
+  .welcome-btn.food {
+    background: rgba(255,180,50,0.12);
+    border-color: rgba(255,180,50,0.25);
+  }
+  .welcome-btn.food:hover {
+    background: rgba(255,180,50,0.2);
+    border-color: rgba(255,180,50,0.4);
+    box-shadow: 0 0 30px rgba(255,180,50,0.15);
+  }
+  .welcome-sub {
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.15em;
+  }
+
+  /* === MODE TRANSITIONS === */
+  .mode-panel {
+    position: fixed; inset: 0;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  .mode-panel.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* === LOVE MODE === */
+  #love-mode {
+    display: flex;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  #love-mode.active { pointer-events: auto; }
+  #message-card {
+    max-width: 680px; width: 88%;
+    padding: 2.8rem 2.4rem;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+    transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1),
+                transform 0.8s cubic-bezier(0.16,1,0.3,1);
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+  }
+  #message-card.show { opacity: 1; transform: scale(1) translateY(0); }
+  #message-card {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1.5px, transparent 1.5px);
+    background-size: 18px 18px;
+  }
+  #message-card::before {
+    content: '';
+    position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: conic-gradient(from 0deg,transparent,rgba(245,87,108,0.06),transparent,rgba(240,147,251,0.06),transparent);
+    animation: rotateBg 8s linear infinite;
+    z-index: -1;
+  }
+  @keyframes rotateBg { to { transform: rotate(360deg); } }
+  #message-text {
+    font-size: clamp(1.2rem,3vw,1.8rem);
+    line-height: 1.8;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: 0.05em;
+    min-height: 2em;
+  }
+  #message-text .char {
+    display: inline; opacity: 0;
+    animation: fadeChar 0.5s ease forwards;
+  }
+  @keyframes fadeChar { to { opacity: 1; } }
+  #message-counter {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.15em;
+  }
+  #love-hint {
+    position: fixed; bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    color: rgba(255,255,255,0.2);
+    font-size: 0.85rem; letter-spacing: 0.1em;
+    pointer-events: none;
+    animation: hintPulse 2s ease-in-out infinite;
+    font-family: sans-serif;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  #love-hint.show { opacity: 1; }
+  @keyframes hintPulse {
+    0%,100% { opacity: 0.15; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 0.5; transform: translateX(-50%) translateY(-4px); }
+  }
+
+  /* === SWITCH BUTTON (floating) === */
+  #switch-btn {
+    position: fixed;
+    right: 1.5rem;
+    z-index: 15;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #switch-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #switch-btn:hover {
+    background: rgba(255,255,255,0.1);
+    transform: scale(1.1);
+  }
+  #switch-btn.top { top: 1.5rem; }
+  #switch-btn.bottom { bottom: 1.5rem; background: rgba(255,180,50,0.12); border-color: rgba(255,180,50,0.2); }
+  #switch-btn.bottom:hover { background: rgba(255,180,50,0.2); }
+  #switch-btn.photo-pos { top: 1.5rem; background: rgba(100,200,255,0.12); border-color: rgba(100,200,255,0.2); }
+  #switch-btn.photo-pos:hover { background: rgba(100,200,255,0.2); }
+
+  /* === FOOD MODE === */
+  #food-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .food-title {
+    font-size: clamp(1.4rem,3.5vw,2.2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg,#ffd700,#ff8c42);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .food-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.1em;
+    margin-bottom: 3rem;
+  }
+
+  /* Slot machine */
+  #slot-container {
+    position: relative;
+    width: 320px;
+    max-width: 88vw;
+    height: 100px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(8px);
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+  #slot-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    border-radius: 20px;
+  }
+  #slot-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    will-change: transform;
+  }
+  #slot-highlight {
+    position: absolute;
+    left: 8px; right: 8px;
+    top: 50%; height: 80px;
+    transform: translateY(-50%);
+    border-radius: 12px;
+    background: rgba(255,180,50,0.08);
+    border: 1px solid rgba(255,180,50,0.15);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .slot-item {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem,2.8vw,1.3rem);
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.05em;
+    padding: 0 1.5rem;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .food-result-area {
+    text-align: center;
+    min-height: 2rem;
+  }
+  #food-result {
+    font-size: clamp(1.6rem,4vw,2.4rem);
+    line-height: 1.5;
+    letter-spacing: 0.05em;
+    display: none;
+  }
+  #food-result.show {
+    display: block;
+    animation: resultPop 0.6s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes resultPop {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  #food-roll-btn {
+    font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
+    font-size: 1.05rem;
+    padding: 0.8rem 3rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255,180,50,0.25);
+    background: rgba(255,180,50,0.1);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    letter-spacing: 0.08em;
+    margin-top: 1.2rem;
+  }
+  #food-roll-btn:hover {
+    background: rgba(255,180,50,0.2);
+    border-color: rgba(255,180,50,0.4);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255,180,50,0.15);
+  }
+  #food-roll-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* === Heart burst === */
+  .heart-particle {
+    position: fixed; pointer-events: none; z-index: 30;
+    font-size: 1.2rem;
+    animation: heartFloat 1.8s ease-out forwards;
+  }
+  @keyframes heartFloat {
+    0% { opacity: 1; transform: translate(0,0) scale(0.5) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--tx),var(--ty)) scale(1.2) rotate(var(--tr)); }
+  }
+  .sparkle {
+    position: fixed; pointer-events: none; z-index: 30;
+    border-radius: 50%;
+    animation: sparkleFly 1.2s ease-out forwards;
+  }
+  @keyframes sparkleFly {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--sx),var(--sy)) scale(0); }
+  }
+
+  /* === Food celebration === */
+  .food-confetti {
+    position: fixed; pointer-events: none; z-index: 30;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    animation: confettiFall 2.5s ease-in forwards;
+  }
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translate(0,0) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--cx),var(--cy)) rotate(var(--cr)); }
+  }
+
+  .food-emoji-burst {
+    position: fixed; pointer-events: none; z-index: 30;
+    font-size: 1.8rem;
+    animation: emojiFloat 2s ease-out forwards;
+  }
+  @keyframes emojiFloat {
+    0% { opacity: 1; transform: translate(0,0) scale(0.3) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--ex),var(--ey)) scale(1.2) rotate(var(--er)); }
+  }
+
+  /* === PHOTO MODE === */
+  #photo-mode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+  }
+
+  #photo-viewport {
+    width: 88vw;
+    max-width: 520px;
+    text-align: center;
+  }
+  #photo-slide {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+    position: relative;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #photo-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  #photo-slide .placeholder {
+    font-size: 4rem;
+    opacity: 0.3;
+  }
+  #photo-slide.fade-out {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  #photo-caption {
+    margin-top: 1.2rem;
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.05em;
+    min-height: 1.8em;
+    transition: opacity 0.4s ease;
+  }
+  #photo-nav {
+    margin-top: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  #photo-nav button {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 1.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  #photo-nav button:hover {
+    background: rgba(255,255,255,0.1);
+    transform: scale(1.1);
+  }
+  #photo-counter {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.1em;
+    min-width: 5rem;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<!-- WELCOME -->
+<div id="welcome">
+  <h1>✦ 给生生的 ✦</h1>
+  <button class="welcome-btn love" onclick="startLove()">💬 盘点那些神级聊天记录场面</button>
+  <button class="welcome-btn food" onclick="startFood()">🍜 今天吃什么</button>
+  <button class="welcome-btn photo" onclick="startPhoto()">📸 一些照片（随时更新）</button>
+  <div class="welcome-sub">选一个吧～</div>
+</div>
+
+<!-- LOVE MODE -->
+<div id="love-mode" class="mode-panel">
+  <div id="message-card">
+    <div id="message-text"></div>
+    <div id="message-counter">✦</div>
+  </div>
+</div>
+<div id="love-hint">再点一下 · 还有下一幕</div>
+
+<!-- SWITCH BUTTON -->
+<button id="switch-btn" class="bottom" onclick="switchToFood()" title="今天吃什么">🍜</button>
+
+<!-- FOOD MODE -->
+<div id="food-mode" class="mode-panel">
+  <div class="food-title">🍜 今天吃什么</div>
+  <div class="food-subtitle">摇到哪个吃哪个！</div>
+
+  <div id="slot-container">
+    <div id="slot-window">
+      <div id="slot-highlight"></div>
+      <div id="slot-list"></div>
+    </div>
+  </div>
+
+  <div class="food-result-area">
+    <div id="food-result"></div>
+  </div>
+
+  <button id="food-roll-btn" onclick="rollFood()">🎲 摇一摇</button>
+</div>
+
+<!-- PHOTO MODE -->
+<div id="photo-mode" class="mode-panel">
+  <div id="photo-viewport">
+    <div id="photo-slide"></div>
+    <div id="photo-caption"></div>
+    <div id="photo-nav">
+      <button id="photo-prev" onclick="prevPhoto()">‹</button>
+      <span id="photo-counter"></span>
+      <button id="photo-next" onclick="nextPhoto()">›</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+const loveMessages = [
+  "连在我们认为最亲密、最能抵御一部分痛苦的关系里面，\n其实也掺了好多碎石头的感觉。\n没办法大口吞下，要不断停下来忍痛把石子抿出来。",
+  "我也会想——不过感情就是这样吧，\n经历很多磨难才弥足珍贵。\n如果没有那些石子，你是不会知道大口吞咽是多么奢侈的事情。",
+  "我们的感情空间可以站得下两个下意识很大的人，\n但是不能是两个把想法往里挤压、不给对方机会的人。",
+  "我是陈可儿的狗。\n陈可儿，我已被征服 🐶",
+  "我对你的占有欲是空前的，知道吗？",
+  "好呀……我属于你。",
+  "还有就是，当下好像已经好的东西覆盖不了你的很多痛苦，\n同时还在增添特别多问题给你。\n我也不想成为一个让你继续消耗的人。你明白吗？",
+  "痛苦居然成为亲密的一部分。\n痛苦这种情绪，简直就是随手就能拎出来。",
+  "【Chapter 2】\n还记得在群里说过禁止对食吗？生生。\n怎么就和我在一起了？\n——智子\n——欸嘿。\n——现在说这个是不是有点晚了？\n——你人都是我的了，肖嘉耀。",
+  "随便吧，烧了再建。",
+  "因为我喜欢陈可儿，\n不能是我自己的吗？🥺",
+  "3月5日 23:22\n我给陈可儿打电话说想她了。\n她说：\n「那你想着吧。」",
+  "也是喜欢的没招了。\n好想把你放嘴里。\n——智子\n——Xen\n——顷刻炼化一头飞猪河童。",
+  "想肖嘉耀 QAQ",
+  "我也好想陈可儿 QAQ",
+  "你长成门酱那样我都要斟酌一下了，知道吗。",
+  "我躺在你怀里的时候，\n你能想到初遇的那天我们会变成今天这样吗？",
+  "看见你的那张蠢脸我就想亲。",
+  "5866 我今天穿了一条很难扒的裤子。",
+  "已建成一个小狗窝 🐾",
+  "豆包也是帮我生成肖嘉耀穿比基尼的照片好吧\n（到底多想看啊）",
+  "肖嘉耀也太厉害了。怎么这么厉害。\n听你说话得劲。",
+  "你赢了肖嘉耀 🏳️\n我已经死心塌地爱上你了。",
+  "完全低山臭水遇知音。",
+  "肖嘉耀你是吸血鬼吗。老不死的。",
+  "肖嘉耀理理我，不然死给你看",
+  "换个房子变成我们家怎么样",
+  "收到。豆包开放电脑给我老婆玩，\n但是厕所不开放，给她多准备点水方便憋尿。",
+  "双输其实就是双赢吧，笨蛋",
+  "每次认真说出这种话的时候我也会被自己的话……\n嗯怎么说就是反馈一下，\n在你这里有这种人生首次的一些体验。\n怎么说呢，实在是太美好了陈可儿。\n不光能看见你的美好，有时候也能发现自己的一部分好东西。\n嗯，遇见陈可儿真是太好了。",
+  "【全世界最可爱最善良最有爱心最富有魅力之人\n8n23大王，请给我继续发照片\n好吗\n这个世界需要你的领袖级别可爱的照片拯救\n狗牙村的村民的希望就是它了】",
+  "🌟 达成成就：拯救狗牙村！\n你已成为该村领袖 🌟",
+  "臭狗牙快点出现。",
+  "你等会不要讲些\n「我要求司机掉头回来」\n的话哦。",
+  "好想你啊生生，超级想。",
+  "我也好想陈可儿，超级想。"
+];
+
+const photos = [
+  { src: 'photos/06eb056b7eaad3e47af13341cf35402e.jpg', caption: '📸' },
+  { src: 'photos/243cfccd51d90fca27e001b3991d9ec6.jpg', caption: '📸' },
+  { src: 'photos/2513c7ee529c16479243bd2417b09a10.jpg', caption: '📸' },
+  { src: 'photos/2e7c323fa8a1993a22e1b59de63d3229.jpg', caption: '📸' },
+  { src: 'photos/6672a0652b7d04cb81e5d2f7fbfc65d8.jpg', caption: '📸' },
+  { src: 'photos/81ef5f08758fcbf3c654bfe637039cb9.jpg', caption: '📸' },
+  { src: 'photos/9a44b0999d4cfb364f1badc5ae03fc1a.jpg', caption: '📸' },
+  { src: 'photos/bf07bb0e0bc130846b12e5105f08e6a1.jpg', caption: '📸' },
+  { src: 'photos/ca016101cad554b9d2d988f084fc2940.jpg', caption: '📸' },
+  { src: 'photos/d4bcb47f1697fa8c34dce745e1d693fd.jpg', caption: '📸' },
+  { src: 'photos/de6ac06211b463f201f827283bd2f54c.jpg', caption: '📸' },
+  { src: 'photos/f9cbb8e99eb1ddf2c349e4f565733fb5.jpg', caption: '📸' },
+];
+
+const foodOptions = [
+  "super辣湘菜+大米饭",
+  "最近是不是没吃刘文祥",
+  "食堂饺子直接干碳水",
+  "洋人饭萨莉亚🫴",
+  "咖喱蛋包饭",
+  "二楼螺蛳粉",
+  "M也要吃饭的麦当劳",
+  "疯狂开封菜",
+  "牛肉粿条记得多要青菜哦",
+  "寿司",
+  "壹方城那个正谈炸鸡",
+  "美式汉堡也很爽吧",
+  "牛肉饭！",
+  "湖南米粉",
+  "吉野家",
+  "真功夫👊",
+  "再摇一次吧生生",
+  "食其家那个麻婆豆腐肥牛饭好吃好吃"
+];
+
+// ========== CANVAS ==========
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+class Star {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.size = Math.random() * 2 + 0.5;
+    this.alpha = Math.random();
+    this.speed = Math.random() * 0.005 + 0.002;
+    this.phase = Math.random() * Math.PI * 2;
+  }
+  update(t) {
+    this.alpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * this.speed + this.phase));
+    this.x += Math.sin(t * 0.0003 + this.phase) * 0.02;
+    this.y += Math.cos(t * 0.0004 + this.phase) * 0.02;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${this.alpha})`;
+    ctx.fill();
+  }
+}
+
+function drawConstellations(stars) {
+  for (let i = 0; i < stars.length; i++) {
+    for (let j = i + 1; j < stars.length; j++) {
+      const dx = stars[i].x - stars[j].x, dy = stars[i].y - stars[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120) {
+        const alpha = (1 - dist / 120) * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(stars[i].x, stars[i].y); ctx.lineTo(stars[j].x, stars[j].y);
+        ctx.strokeStyle = `rgba(255,180,200,${alpha})`;
+        ctx.lineWidth = 0.5; ctx.stroke();
+      }
+    }
+  }
+}
+
+class FloatHeart {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W; this.y = H + 20;
+    this.size = Math.random() * 12 + 6;
+    this.speed = Math.random() * 0.3 + 0.15;
+    this.alpha = Math.random() * 0.3 + 0.1;
+    this.swingSpeed = Math.random() * 0.002 + 0.001;
+    this.phase = Math.random() * Math.PI * 2;
+    this.char = ['♥','♡','❤','💕','✨'][Math.floor(Math.random() * 5)];
+  }
+  update(t) {
+    this.y -= this.speed;
+    this.x += Math.sin(t * this.swingSpeed + this.phase) * 0.3;
+    if (this.y < -30) this.reset();
+    if (this.x < -30 || this.x > W + 30) this.reset();
+  }
+  draw() {
+    ctx.font = `${this.size}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = '#f5576c';
+    ctx.fillText(this.char, this.x, this.y);
+    ctx.globalAlpha = 1;
+  }
+}
+
+const stars = Array.from({ length: 180 }, () => new Star());
+const hearts = Array.from({ length: 12 }, () => new FloatHeart());
+
+function animate(t) {
+  ctx.clearRect(0, 0, W, H);
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  grad.addColorStop(0, '#1a1a2e'); grad.addColorStop(0.5, '#0f0f1a'); grad.addColorStop(1, '#0a0a12');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+  stars.forEach(s => { s.update(t); s.draw(); });
+  drawConstellations(stars);
+  hearts.forEach(h => { h.update(t); h.draw(); });
+  // Shooting stars
+  if (Math.random() < 0.003) {
+    const sx = Math.random() * W * 1.5;
+    const sy = Math.random() * H * 0.4;
+    const slen = 80 + Math.random() * 120;
+    const angle = Math.PI / 4 + Math.random() * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx - Math.cos(angle) * slen, sy + Math.sin(angle) * slen);
+    const grad2 = ctx.createLinearGradient(sx, sy, sx - Math.cos(angle) * slen, sy + Math.sin(angle) * slen);
+    grad2.addColorStop(0, 'rgba(255,255,255,0.8)');
+    grad2.addColorStop(0.3, 'rgba(255,255,255,0.2)');
+    grad2.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = grad2;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Nebula glow orbs
+  for (let i = 0; i < 4; i++) {
+    const x = W * (0.15 + i * 0.23) + Math.sin(t * 0.00015 + i * 1.7) * 120;
+    const y = H * (0.25 + Math.sin(t * 0.0002 + i * 2.3) * 0.15);
+    const r = 180 + Math.sin(t * 0.0008 + i * 1.3) * 40;
+    const colors = [
+      `rgba(245,87,108,${0.025 + 0.015 * Math.sin(t * 0.0004 + i)})`,
+      `rgba(100,180,255,${0.02 + 0.01 * Math.sin(t * 0.0005 + i * 1.2)})`,
+      `rgba(200,130,255,${0.02 + 0.01 * Math.sin(t * 0.0006 + i * 0.8)})`,
+      `rgba(255,180,50,${0.015 + 0.01 * Math.sin(t * 0.0003 + i * 1.5)})`
+    ];
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, colors[i]);
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ========== EFFECTS ==========
+function burstHearts(x, y) {
+  const emojis = ['🐶','🍅','❤️','🥒','🐕','💕','✨','🌸'];
+  for (let i = 0; i < 16; i++) {
+    const el = document.createElement('div');
+    el.className = 'heart-particle';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * 120 + 60;
+    el.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--ty', Math.sin(angle) * dist - 60 + 'px');
+    el.style.setProperty('--tr', (Math.random() * 360) + 'deg');
+    el.style.fontSize = (Math.random() * 14 + 10) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+  for (let i = 0; i < 12; i++) {
+    const el = document.createElement('div');
+    el.className = 'sparkle';
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * 80 + 20;
+    el.style.setProperty('--sx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--sy', Math.sin(angle) * dist + 'px');
+    el.style.width = el.style.height = (Math.random() * 4 + 2) + 'px';
+    const colors = ['#f093fb','#f5576c','#ffecd2','#fff','#ffd700'];
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+}
+
+function foodCelebration() {
+  const emojis = ['🍜','🍚','🥟','🍕','🍛','🍝','🍔','🌮','🥗','🍣','🍤','🥘','🍲','🥡','🌯','🥟','🍙','🍱'];
+  for (let i = 0; i < 24; i++) {
+    const el = document.createElement('div');
+    el.className = 'food-emoji-burst';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = (Math.random() * window.innerWidth) + 'px';
+    el.style.top = (Math.random() * window.innerHeight * 0.6 + window.innerHeight * 0.2) + 'px';
+    el.style.setProperty('--ex', (Math.random() - 0.5) * 200 + 'px');
+    el.style.setProperty('--ey', (Math.random() - 1) * 200 + 'px');
+    el.style.setProperty('--er', (Math.random() * 720 - 360) + 'deg');
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+  // Confetti
+  const colors = ['#ffd700','#ff8c42','#f5576c','#f093fb','#4facfe','#43e97b','#ffecd2'];
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'food-confetti';
+    el.style.left = (Math.random() * window.innerWidth) + 'px';
+    el.style.top = '-10px';
+    el.style.setProperty('--cx', (Math.random() - 0.5) * 300 + 'px');
+    el.style.setProperty('--cy', (window.innerHeight * 0.6 + Math.random() * window.innerHeight * 0.4) + 'px');
+    el.style.setProperty('--cr', (Math.random() * 720) + 'deg');
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = (Math.random() * 6 + 4) + 'px';
+    el.style.height = (Math.random() * 6 + 4) + 'px';
+    el.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    el.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// ========== LOVE MODE ==========
+let loveIndex = -1;
+let loveShuffle = [];
+const messageText = document.getElementById('message-text');
+const messageCard = document.getElementById('message-card');
+const messageCounter = document.getElementById('message-counter');
+const loveHint = document.getElementById('love-hint');
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showLoveMessage(index) {
+  const text = loveMessages[loveShuffle[index]];
+  messageText.innerHTML = '';
+  messageCard.classList.add('show');
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = text[i];
+    span.style.animationDelay = `${i * 30}ms`;
+    messageText.appendChild(span);
+  }
+  messageCounter.textContent = `${index + 1} / ${loveShuffle.length}`;
+}
+
+function startLove(e) {
+  if (e && e.clientX) burstHearts(e.clientX, e.clientY);
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('love-mode').classList.add('active');
+  document.getElementById('switch-btn').classList.add('show');
+  loveHint.classList.add('show');
+  loveShuffle = shuffleArray(Array.from({ length: loveMessages.length }, (_, i) => i));
+  loveIndex = 0;
+  showLoveMessage(0);
+  showHomeBtn();
+}
+
+messageCard.addEventListener('click', (e) => {
+  if (loveIndex < 0 || !document.getElementById('love-mode').classList.contains('active')) return;
+  burstHearts(e.clientX, e.clientY);
+  loveIndex = (loveIndex + 1) % loveShuffle.length;
+  if (loveIndex === 0) {
+    loveShuffle = shuffleArray(Array.from({ length: loveMessages.length }, (_, i) => i));
+  }
+  showLoveMessage(loveIndex);
+});
+
+// ========== PHOTO MODE ==========
+let photoIdx = 0;
+const photoSlide = document.getElementById('photo-slide');
+const photoCaption = document.getElementById('photo-caption');
+const photoCounter = document.getElementById('photo-counter');
+
+function renderPhoto(index) {
+  photoSlide.classList.add('fade-out');
+  setTimeout(() => {
+    photoSlide.innerHTML = '';
+    const p = photos[index];
+    if (p.src) {
+      const img = document.createElement('img');
+      img.src = p.src;
+      img.alt = '';
+      photoSlide.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'placeholder';
+      ph.textContent = '📸';
+      photoSlide.appendChild(ph);
+    }
+    photoCaption.textContent = p.caption;
+    photoCounter.textContent = `${index + 1} / ${photos.length}`;
+    photoSlide.classList.remove('fade-out');
+  }, 300);
+}
+
+function nextPhoto() {
+  if (photos.length === 0) return;
+  photoIdx = (photoIdx + 1) % photos.length;
+  renderPhoto(photoIdx);
+}
+
+function prevPhoto() {
+  if (photos.length === 0) return;
+  photoIdx = (photoIdx - 1 + photos.length) % photos.length;
+  renderPhoto(photoIdx);
+}
+
+function startPhoto() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('photo-mode').classList.add('active');
+  document.getElementById('switch-btn').classList.add('show');
+  document.getElementById('switch-btn').className = 'switch-btn photo-pos';
+  document.getElementById('switch-btn').textContent = '💕';
+  document.getElementById('switch-btn').setAttribute('onclick', 'switchToLove()');
+  photoIdx = 0;
+  renderPhoto(0);
+}
+
+function switchToPhotos() {
+  document.getElementById('love-mode').classList.remove('active');
+  loveHint.classList.remove('show');
+  document.getElementById('food-mode').classList.remove('active');
+  document.getElementById('photo-mode').classList.add('active');
+  document.getElementById('switch-btn').textContent = '💕';
+  document.getElementById('switch-btn').className = 'switch-btn photo-pos';
+  document.getElementById('switch-btn').setAttribute('onclick', 'switchToLove()');
+  renderPhoto(photoIdx);
+  showHomeBtn();
+}
+
+// ========== FOOD MODE ==========
+let isRolling = false;
+let rollTimer = null;
+const slotList = document.getElementById('slot-list');
+const foodResult = document.getElementById('food-result');
+const foodRollBtn = document.getElementById('food-roll-btn');
+const slotContainer = document.getElementById('slot-container');
+
+function buildSlotList() {
+  // 5 copies for long scroll runway
+  const items = [];
+  for (let c = 0; c < 7; c++) items.push(...foodOptions);
+  slotList.innerHTML = '';
+  items.forEach((text) => {
+    const div = document.createElement('div');
+    div.className = 'slot-item';
+    div.textContent = text;
+    slotList.appendChild(div);
+  });
+}
+
+function getSlotIndex(foodIdx, copy) {
+  // copy 0 = first copy, default to middle copy
+  const c = copy != null ? copy : 3;
+  return c * foodOptions.length + foodIdx;
+}
+
+function rollFood() {
+  if (isRolling) return;
+  isRolling = true;
+  foodRollBtn.disabled = true;
+  foodResult.classList.remove('show');
+  foodResult.style.display = 'none';
+
+  const IH = 100;
+  const targetIdx = Math.floor(Math.random() * foodOptions.length);
+  // Target: 4th copy (index 3) + target item
+  const targetSlotIdx = 3 * foodOptions.length + targetIdx;
+  const targetPos = targetSlotIdx * IH;
+
+  // Start: 2.5 copies up from target
+  const startSlotIdx = targetSlotIdx - Math.floor(foodOptions.length * 2.5);
+  const startPos = startSlotIdx * IH;
+
+  // Position at start (no transition)
+  slotList.style.transition = 'none';
+  slotList.style.transform = `translateY(-${startPos}px)`;
+
+  // Force reflow
+  void slotContainer.offsetHeight;
+
+  // Animate to target
+  const distance = targetPos - startPos;
+  const duration = Math.max(2200, distance * 0.5);
+
+  slotList.style.transition = `transform ${duration}ms cubic-bezier(0.10, 0.60, 0.15, 1.00)`;
+  slotList.style.transform = `translateY(-${targetPos}px)`;
+
+  if (rollTimer) clearTimeout(rollTimer);
+  rollTimer = setTimeout(() => {
+    const result = foodOptions[targetIdx];
+    foodResult.textContent = result;
+    foodResult.style.display = 'block';
+    foodResult.classList.add('show');
+    foodRollBtn.disabled = false;
+    isRolling = false;
+    rollTimer = null;
+    foodCelebration();
+  }, duration + 300);
+}
+
+function startFood() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('food-mode').classList.add('active');
+  document.getElementById('switch-btn').classList.add('show');
+  document.getElementById('switch-btn').className = 'switch-btn top';
+  document.getElementById('switch-btn').textContent = '💕';
+  document.getElementById('switch-btn').setAttribute('onclick', 'switchToLove()');
+  buildSlotList();
+  const initSlotIdx = 3 * foodOptions.length;
+  slotList.style.transition = 'none';
+  slotList.style.transform = `translateY(-${initSlotIdx * 100}px)`;
+  foodResult.style.display = 'none';
+  showHomeBtn();
+}
+
+function switchToFood() {
+  document.getElementById('love-mode').classList.remove('active');
+  loveHint.classList.remove('show');
+  document.getElementById('photo-mode').classList.remove('active');
+  document.getElementById('food-mode').classList.add('active');
+  document.getElementById('switch-btn').textContent = '💕';
+  document.getElementById('switch-btn').className = 'switch-btn top';
+  document.getElementById('switch-btn').setAttribute('onclick', 'switchToLove()');
+  buildSlotList();
+  const initSlotIdx = 3 * foodOptions.length;
+  slotList.style.transition = 'none';
+  slotList.style.transform = `translateY(-${initSlotIdx * 100}px)`;
+  foodResult.style.display = 'none';
+  showHomeBtn();
+}
+
+function switchToLove() {
+  document.getElementById('food-mode').classList.remove('active');
+  document.getElementById('photo-mode').classList.remove('active');
+  document.getElementById('love-mode').classList.add('active');
+  loveHint.classList.add('show');
+  document.getElementById('switch-btn').textContent = '🍜';
+  document.getElementById('switch-btn').className = 'switch-btn bottom';
+  document.getElementById('switch-btn').setAttribute('onclick', 'switchToFood()');
+  if (loveIndex < 0) {
+    loveIndex = 0;
+    showLoveMessage(0);
+  }
+}
+
+function goHome() {
+  document.getElementById('love-mode').classList.remove('active');
+  document.getElementById('food-mode').classList.remove('active');
+  document.getElementById('photo-mode').classList.remove('active');
+  loveHint.classList.remove('show');
+  document.getElementById('switch-btn').classList.remove('show');
+  document.getElementById('home-btn').classList.remove('show');
+  document.getElementById('welcome').classList.remove('hidden');
+}
+
+function showHomeBtn() {
+  document.getElementById('home-btn').classList.add('show');
+}
+
+document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>
