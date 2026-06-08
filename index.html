@@ -240,7 +240,7 @@
     max-width: 480px;
     margin-bottom: 2rem;
   }
-  #guestbook-form input, #guestbook-form textarea {
+  #guestbook-form textarea {
     font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.12);
@@ -255,10 +255,10 @@
     box-sizing: border-box;
     margin-bottom: 0.7rem;
   }
-  #guestbook-form input:focus, #guestbook-form textarea:focus {
+  #guestbook-form textarea:focus {
     border-color: rgba(79,172,254,0.5);
   }
-  #guestbook-form input::placeholder, #guestbook-form textarea::placeholder {
+  #guestbook-form textarea::placeholder {
     color: rgba(255,255,255,0.25);
   }
   #guestbook-form textarea { min-height: 80px; }
@@ -640,7 +640,6 @@
   <div class="guestbook-header">📝 留言板</div>
   <div class="guestbook-subtitle">说点什么吧</div>
   <div id="guestbook-form">
-    <input type="text" id="guestbook-name" placeholder="你的名字（选填）" maxlength="20">
     <textarea id="guestbook-msg" placeholder="写下你想说的话..." maxlength="500"></textarea>
     <button id="guestbook-submit" onclick="submitMessage()">✨ 留言</button>
   </div>
@@ -1178,9 +1177,10 @@ async function loadMessages() {
   list.innerHTML = '<div id="guestbook-loading">加载中...</div>';
   try {
     const resp = await fetch('/api/messages');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const messages = await resp.json();
     if (!Array.isArray(messages) || messages.length === 0) {
-      list.innerHTML = '<div style="color:rgba(255,255,255,0.2);text-align:center;padding:2rem;font-size:0.9rem;">还没有留言，来说第一句吧 ✨</div>';
+      list.innerHTML = '<div style="color:rgba(255,255,255,0.2);text-align:center;padding:2rem;font-size:0.9rem;letter-spacing:0.08em;">还没有留言，来说第一句 ✨</div>';
       return;
     }
     list.innerHTML = '';
@@ -1189,22 +1189,16 @@ async function loadMessages() {
       div.className = 'guestbook-msg';
       const t = new Date(m.time);
       const timeStr = t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-      div.innerHTML = '<div class="msg-header"><span class="msg-name">' + escapeHtml(m.name) + '</span><span class="msg-time">' + timeStr + '</span></div><div class="msg-body">' + escapeHtml(m.message) + '</div>';
+      const safeMsg = (m.message || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      div.innerHTML = '<div class="msg-header"><span class="msg-time">' + timeStr + '</span></div><div class="msg-body">' + safeMsg + '</div>';
       list.appendChild(div);
     });
   } catch(e) {
-    list.innerHTML = '<div style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">加载失败，请刷新页面</div>';
+    list.innerHTML = '<div style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">加载失败，请刷新重试</div>';
   }
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 async function submitMessage() {
-  const nameEl = document.getElementById('guestbook-name');
   const msgEl = document.getElementById('guestbook-msg');
   const btn = document.getElementById('guestbook-submit');
   const message = msgEl.value.trim();
@@ -1216,31 +1210,33 @@ async function submitMessage() {
     const resp = await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: nameEl.value.trim(), message })
+      body: JSON.stringify({ name: '✨', message })
     });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || 'HTTP ' + resp.status);
+    }
     const data = await resp.json();
     if (data.success) {
       msgEl.value = '';
       await loadMessages();
-      // small celebration
-      const btns = ['✨','💙','🌟','💫','💌'];
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 6; i++) {
         const el = document.createElement('div');
         el.className = 'heart-particle';
-        el.textContent = btns[Math.floor(Math.random()*btns.length)];
-        el.style.left = (window.innerWidth/2 + (Math.random()-0.5)*200) + 'px';
-        el.style.top = (window.innerHeight*0.5 + Math.random()*100) + 'px';
-        el.style.setProperty('--tx', (Math.random()-0.5)*100+'px');
-        el.style.setProperty('--ty', (Math.random()*-120-40)+'px');
+        el.textContent = ['✨','💙','🌟','💫','💌'][i%5];
+        el.style.left = (window.innerWidth/2 + (Math.random()-0.5)*180) + 'px';
+        el.style.top = (window.innerHeight*0.5 + Math.random()*80) + 'px';
+        el.style.setProperty('--tx', (Math.random()-0.5)*80+'px');
+        el.style.setProperty('--ty', (Math.random()*-100-30)+'px');
         el.style.setProperty('--tr', (Math.random()*360)+'deg');
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 2000);
       }
     } else {
-      alert('留言失败: ' + (data.error || '请重试'));
+      alert('留言失败，请重试');
     }
   } catch(e) {
-    alert('网络错误，请重试');
+    alert('网络错误：' + e.message);
   }
   btn.disabled = false;
   btn.textContent = '✨ 留言';
