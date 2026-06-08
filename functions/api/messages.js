@@ -62,7 +62,8 @@ export async function onRequest(context) {
           continue;
         }
 
-        const current = JSON.parse(atob(fileData.content.replace(/\s/g, '')).trim() || '[]');
+        const decoded = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
+        const current = JSON.parse(decoded.trim() || '[]');
         current.push({
           id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
           name: (name || '✨').trim().substring(0, 20),
@@ -76,7 +77,7 @@ export async function onRequest(context) {
           headers: putHeaders,
           body: JSON.stringify({
             message: `💬 guestbook message`,
-            content: btoa(JSON.stringify(current)),
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(current)))),
             sha: fileData.sha
           })
         });
