@@ -1,0 +1,5 @@
+\"[].gitignore\"  
+\".wrangler/\"  
+\"*.bat\"  
+\"*.js\"  
+\"!functions/**/*.js\"  

@@ -210,6 +210,125 @@
   #switch-btn.bottom:hover { background: rgba(255,180,50,0.2); }
   #switch-btn.photo-pos { top: 1.5rem; background: rgba(100,200,255,0.12); border-color: rgba(100,200,255,0.2); }
   #switch-btn.photo-pos:hover { background: rgba(100,200,255,0.2); }
+  /* === GUESTBOOK MODE === */
+  #guestbook-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1rem 2rem;
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+  #guestbook-mode.active { pointer-events: auto; }
+  .guestbook-header {
+    font-size: clamp(1.4rem,3.5vw,2.2rem);
+    font-weight: 700;
+    background: linear-gradient(135deg,#4facfe,#00f2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .guestbook-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.08em;
+    margin-bottom: 2rem;
+  }
+  #guestbook-form {
+    width: 88vw;
+    max-width: 480px;
+    margin-bottom: 2rem;
+  }
+  #guestbook-form input, #guestbook-form textarea {
+    font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    color: #fff;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s;
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.7rem;
+  }
+  #guestbook-form input:focus, #guestbook-form textarea:focus {
+    border-color: rgba(79,172,254,0.5);
+  }
+  #guestbook-form input::placeholder, #guestbook-form textarea::placeholder {
+    color: rgba(255,255,255,0.25);
+  }
+  #guestbook-form textarea { min-height: 80px; }
+  #guestbook-submit {
+    font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
+    padding: 0.7rem 2.5rem;
+    border-radius: 50px;
+    border: 1px solid rgba(79,172,254,0.3);
+    background: rgba(79,172,254,0.12);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.08em;
+    font-size: 0.95rem;
+    display: block;
+    margin: 0 auto;
+  }
+  #guestbook-submit:hover {
+    background: rgba(79,172,254,0.2);
+    border-color: rgba(79,172,254,0.5);
+    transform: scale(1.05);
+  }
+  #guestbook-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  #guestbook-list {
+    width: 88vw;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 6rem;
+  }
+  .guestbook-msg {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    animation: gbSlide 0.4s ease;
+  }
+  @keyframes gbSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .guestbook-msg .msg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .guestbook-msg .msg-name {
+    font-size: 0.85rem;
+    color: rgba(79,172,254,0.85);
+    font-weight: 700;
+  }
+  .guestbook-msg .msg-time {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.25);
+  }
+  .guestbook-msg .msg-body {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #guestbook-loading {
+    color: rgba(255,255,255,0.3);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
 
   /* === FOOD MODE === */
   #food-mode {
@@ -468,6 +587,7 @@
   <button class="welcome-btn love" onclick="startLove()">💬 盘点那些神级聊天记录场面</button>
   <button class="welcome-btn food" onclick="startFood()">🍜 今天吃什么</button>
   <button class="welcome-btn photo" onclick="startPhoto()">📸 一些照片（随时更新）</button>
+  <button class="welcome-btn guestbook" onclick="startGuestbook()">📝 留言板</button>
   <div class="welcome-sub">选一个吧～</div>
 </div>
 
@@ -515,6 +635,19 @@
   </div>
 </div>
 
+<!-- GUESTBOOK MODE -->
+<div id="guestbook-mode" class="mode-panel">
+  <div class="guestbook-header">📝 留言板</div>
+  <div class="guestbook-subtitle">说点什么吧</div>
+  <div id="guestbook-form">
+    <input type="text" id="guestbook-name" placeholder="你的名字（选填）" maxlength="20">
+    <textarea id="guestbook-msg" placeholder="写下你想说的话..." maxlength="500"></textarea>
+    <button id="guestbook-submit" onclick="submitMessage()">✨ 留言</button>
+  </div>
+  <div id="guestbook-list"></div>
+</div>
+
+
 <script>
 // ========== DATA ==========
 const loveMessages = [
@@ -558,9 +691,14 @@ const loveMessages = [
 
 const photos = [
   { src: 'photos/06eb056b7eaad3e47af13341cf35402e.jpg', caption: '📸' },
+  { src: 'photos/0bed29e64f14eb026d8cabbdef3be43d.jpg', caption: '📸' },
+  { src: 'photos/1d63b87cd4bf26fc6ce379cef04529a2.jpg', caption: '📸' },
+  { src: 'photos/23b42ec8cf87c57cf509d23fe705501f.jpg', caption: '📸' },
   { src: 'photos/243cfccd51d90fca27e001b3991d9ec6.jpg', caption: '📸' },
   { src: 'photos/2513c7ee529c16479243bd2417b09a10.jpg', caption: '📸' },
+  { src: 'photos/29bdad1cb60dbccb75094bf5bb72d4d0.jpg', caption: '📸' },
   { src: 'photos/2e7c323fa8a1993a22e1b59de63d3229.jpg', caption: '📸' },
+  { src: 'photos/5ef2d13ef1cfd222eb5c3931f20dce27.jpg', caption: '📸' },
   { src: 'photos/6672a0652b7d04cb81e5d2f7fbfc65d8.jpg', caption: '📸' },
   { src: 'photos/81ef5f08758fcbf3c654bfe637039cb9.jpg', caption: '📸' },
   { src: 'photos/9a44b0999d4cfb364f1badc5ae03fc1a.jpg', caption: '📸' },
@@ -569,6 +707,7 @@ const photos = [
   { src: 'photos/d4bcb47f1697fa8c34dce745e1d693fd.jpg', caption: '📸' },
   { src: 'photos/de6ac06211b463f201f827283bd2f54c.jpg', caption: '📸' },
   { src: 'photos/f9cbb8e99eb1ddf2c349e4f565733fb5.jpg', caption: '📸' },
+  { src: 'photos/ff8b922e22c25653be376c32109247a8.jpg', caption: '📸' },
 ];
 
 const foodOptions = [
@@ -1032,6 +1171,92 @@ function showHomeBtn() {
 }
 
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+// ========== GUESTBOOK ==========
+async function loadMessages() {
+  const list = document.getElementById('guestbook-list');
+  list.innerHTML = '<div id="guestbook-loading">加载中...</div>';
+  try {
+    const resp = await fetch('/api/messages');
+    const messages = await resp.json();
+    if (!Array.isArray(messages) || messages.length === 0) {
+      list.innerHTML = '<div style="color:rgba(255,255,255,0.2);text-align:center;padding:2rem;font-size:0.9rem;">还没有留言，来说第一句吧 ✨</div>';
+      return;
+    }
+    list.innerHTML = '';
+    messages.reverse().forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'guestbook-msg';
+      const t = new Date(m.time);
+      const timeStr = t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      div.innerHTML = '<div class="msg-header"><span class="msg-name">' + escapeHtml(m.name) + '</span><span class="msg-time">' + timeStr + '</span></div><div class="msg-body">' + escapeHtml(m.message) + '</div>';
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">加载失败，请刷新页面</div>';
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function submitMessage() {
+  const nameEl = document.getElementById('guestbook-name');
+  const msgEl = document.getElementById('guestbook-msg');
+  const btn = document.getElementById('guestbook-submit');
+  const message = msgEl.value.trim();
+  if (!message) return;
+
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+  try {
+    const resp = await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nameEl.value.trim(), message })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      msgEl.value = '';
+      await loadMessages();
+      // small celebration
+      const btns = ['✨','💙','🌟','💫','💌'];
+      for (let i = 0; i < 8; i++) {
+        const el = document.createElement('div');
+        el.className = 'heart-particle';
+        el.textContent = btns[Math.floor(Math.random()*btns.length)];
+        el.style.left = (window.innerWidth/2 + (Math.random()-0.5)*200) + 'px';
+        el.style.top = (window.innerHeight*0.5 + Math.random()*100) + 'px';
+        el.style.setProperty('--tx', (Math.random()-0.5)*100+'px');
+        el.style.setProperty('--ty', (Math.random()*-120-40)+'px');
+        el.style.setProperty('--tr', (Math.random()*360)+'deg');
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2000);
+      }
+    } else {
+      alert('留言失败: ' + (data.error || '请重试'));
+    }
+  } catch(e) {
+    alert('网络错误，请重试');
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ 留言';
+}
+
+function startGuestbook() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('guestbook-mode').classList.add('active');
+  document.getElementById('switch-btn').classList.add('show');
+  document.getElementById('switch-btn').textContent = '💕';
+  document.getElementById('switch-btn').className = 'switch-btn top';
+  document.getElementById('switch-btn').setAttribute('onclick', 'switchToLove()');
+  loadMessages();
+  showHomeBtn();
+}
+
 </script>
 </body>
 </html>
